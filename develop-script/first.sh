@@ -6,5 +6,6 @@ rm -rf checktomor
 git clone https://github.com/somkadam/newreq.git
 cd newreq
 git checkout -b dev origin/dev
+cd develop-script
 source pass_arg -d
 #sh unittest-dev/build.sh

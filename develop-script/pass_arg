@@ -1,0 +1,109 @@
+#!/bin/sh
+
+if [ -n "$BASH_SOURCE" ]; then
+	scr_name="$BASH_SOURCE"
+else
+	printf "\033[1;31mThis script must be sourced\033[0m \n"
+	printf "\033[1;31msource build_script_name\033[0m\n"
+	exit 1
+fi
+
+build_default()
+{
+
+	rm -rf poky meta-openembedded 
+	### Clone poky sing rocko branch #####
+	git clone -b rocko git://git.yoctoproject.org/poky
+	cd poky
+
+	## clone meta-rasp layer inside poky
+	git clone -b rocko git://git.yoctoproject.org/meta-raspberrypi
+
+	cd ../
+
+	### Clone meta oe layer for supported layers ####
+	git clone -b rocko git://git.openembedded.org/meta-openembedded
+	cd meta-openembedded/
+
+	cp -a meta-multimedia/ meta-networking/ meta-oe/ meta-python/ ../poky/
+
+	cd ../poky
+
+	dir=`pwd`
+
+	. oe-init-build-env
+	echo "MACHINE ??= \"raspberrypi3\"" >> conf/local.conf
+
+	echo "CORE_IMAGE_EXTRA_INSTALL += \"ltp\"" >> conf/local.conf
+
+	echo "BBLAYERS += \"$dir/meta-networking \\
+                  $dir/meta-multimedia \\
+                  $dir/meta-oe \\
+                  $dir/meta-python \\
+                  $dir/meta-raspberrypi \\
+                \""  >> conf/bblayers.conf
+
+
+	bitbake rpi-basic-image
+
+	return
+}
+
+select_packages()
+{
+
+	printf "Called select package\n"
+
+	return
+}
+
+help()
+{
+	printf "||########################################################################################################||\n"
+	printf "	1. To build default image, run \033[1;31msource build_rasp\033[0m
+	2. To build image with set of defined package run \033[1;31msource build_rasp -p package-file\033[0m
+	3. To build image with specific kernel version run \033[1;31msource build_rasp -k kernel-cfile\033[0m
+	4. To build image with specific toolchain run \033[1;31msource build_rasp -t toolchain-file\033[0m
+	5. To build with all option run \033[1;31msource build_rasp -p package-file -k kernel-file -t toolchain-file\033[0m\n"
+	printf "||#########################################################################################################||\n"
+
+	return
+}
+
+for arg in "$@"
+do
+case $arg in
+	-p|--pkgconfig=*)
+		pkgfile="$2"
+		echo "pkgfile=$pkgfile"
+		select_packages $pkgfile
+		shift
+		shift
+		;;
+	-k|--kernelconfig=*)
+		kfile="$2"
+		echo "kfile=$kfile"
+		shift
+		shift
+		;;
+	-t|--toolchainconfig=*)
+		tf="$2"
+		echo "toolchinfile=$tf"
+		shift
+		shift
+		;;
+	-d|--default)
+		echo "No config file is passed, build default one"
+		build_default
+		return
+		;;
+	-h|--help)
+		help
+		return
+		;;
+	*)
+		#shift
+		;;
+esac
+done
+

@@ -34,6 +34,8 @@ build_default()
 	. oe-init-build-env
 	echo "MACHINE ??= \"raspberrypi3\"" >> conf/local.conf
 
+	echo "CORE_IMAGE_EXTRA_INSTALL += \"ltp\"" >> conf/local.conf
+
 	echo "BBLAYERS += \"$dir/meta-networking \\
                   $dir/meta-multimedia \\
                   $dir/meta-oe \\
